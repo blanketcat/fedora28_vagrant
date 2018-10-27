@@ -1,31 +1,73 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# Every Vagrant development environment requires a box. You can search for
-# boxes at https://atlas.hashicorp.com/search.
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
 
-# Code nabbed from https://manski.net/2016/09/vagrant-multi-machine-tutorial/
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  os = "bento/fedora-28"
+  net_ip = "192.168.50"
 
-BOX_IMAGE = "bento/fedora-28"
-NODE_COUNT = 2
-
-Vagrant.configure("2") do |config|
-  config.vm.define "master" do |subconfig|
-    subconfig.vm.box = BOX_IMAGE
-    subconfig.vm.hostname = "master"
-    subconfig.vm.network :private_network, ip: "10.0.0.10"
-  end
-
-  (1..NODE_COUNT).each do |i|
-    config.vm.define "node#{i}" do |subconfig|
-      subconfig.vm.box = BOX_IMAGE
-      subconfig.vm.hostname = "minion#{i}"
-      subconfig.vm.network :private_network, ip: "10.0.0.#{i + 10}"
+  config.vm.define :master, primary: true do |master_config|
+    master_config.vm.provider "virtualbox" do |vb|
+        vb.memory = "2048"
+        vb.cpus = 1
+        vb.name = "master"
     end
-  end
+      master_config.vm.box = "#{os}"
+      master_config.vm.host_name = 'saltmaster.local'
+      master_config.vm.network "private_network", ip: "#{net_ip}.10"
+      master_config.vm.synced_folder "saltstack/salt/", "/srv/salt"
+      master_config.vm.synced_folder "saltstack/pillar/", "/srv/pillar"
 
-  # Install avahi on all machines
-  config.vm.provision "shell", inline: <<-SHELL
-    sudo dnf install nss-mdns avahi -y
-  SHELL
-end
+      master_config.vm.provision :salt do |salt|
+        salt.master_config = "saltstack/etc/master"
+        salt.master_key = "saltstack/keys/master_minion.pem"
+        salt.master_pub = "saltstack/keys/master_minion.pub"
+        salt.minion_key = "saltstack/keys/master_minion.pem"
+        salt.minion_pub = "saltstack/keys/master_minion.pub"
+        salt.seed_master = {
+                            "minion1" => "saltstack/keys/minion1.pub",
+                            "minion2" => "saltstack/keys/minion2.pub"
+                           }
+
+        salt.install_type = "stable"
+        salt.install_master = true
+        salt.no_minion = true
+        salt.verbose = true
+        salt.colorize = true
+        salt.bootstrap_options = "-P -c /tmp"
+      end
+    end
+
+
+    [
+      ["minion1",    "#{net_ip}.11",    "1024",    os ],
+      ["minion2",    "#{net_ip}.12",    "1024",    os ],
+    ].each do |vmname,ip,mem,os|
+      config.vm.define "#{vmname}" do |minion_config|
+        minion_config.vm.provider "virtualbox" do |vb|
+            vb.memory = "#{mem}"
+            vb.cpus = 1
+            vb.name = "#{vmname}"
+        end
+        minion_config.vm.box = "#{os}"
+        minion_config.vm.hostname = "#{vmname}"
+        minion_config.vm.network "private_network", ip: "#{ip}"
+
+        minion_config.vm.provision :salt do |salt|
+          salt.minion_config = "saltstack/etc/#{vmname}"
+          salt.minion_key = "saltstack/keys/#{vmname}.pem"
+          salt.minion_pub = "saltstack/keys/#{vmname}.pub"
+          salt.install_type = "stable"
+          salt.verbose = true
+          salt.colorize = true
+          salt.bootstrap_options = "-P -c /tmp"
+        end
+      end
+    end
+    # Install avahi on all machines
+config.vm.provision "shell", inline: <<-SHELL
+  sudo dnf install nss-mdns avahi -y
+SHELL
+  end
