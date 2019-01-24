@@ -4,5 +4,5 @@ install_network_packages:
       - rsync
       - lftp
       - curl
-      - vim
+      - nmap
       - lighttpd
