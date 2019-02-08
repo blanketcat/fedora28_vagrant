@@ -10,8 +10,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.define :master, primary: true do |master_config|
     master_config.vm.provider "virtualbox" do |vb|
-        vb.memory = "2048"
-        vb.cpus = 1
+        vb.memory = "4096"
+        vb.cpus = 2
         vb.name = "master"
     end
       master_config.vm.box = "#{os}"
@@ -39,7 +39,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         salt.bootstrap_options = "-P -c /tmp"
       end
     end
-
 
     [
       ["ha-proxy1",    "#{net_ip}.11",    "1024",    os ],
