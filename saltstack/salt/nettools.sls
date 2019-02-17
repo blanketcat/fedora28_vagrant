@@ -5,4 +5,3 @@ install_network_packages:
       - lftp
       - curl
       - nmap
-      - lighttpd
