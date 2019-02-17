@@ -1,6 +1,6 @@
 # fedora28_vagrant
 
-Vagrant file and config for spinning up 3 fedora28 VirtualBox VMs, 1 Salt-Master and 2 Minions
+Vagrant file and config for spinning up 5 Fedora28 and 1 Ubuntu VirtualBox VMs, 1 Salt-Master / 4 Minions
 
 Used for working through [Learning SaltStack - Second Edition](https://learning.oreilly.com/library/view/learning-saltstack)
 

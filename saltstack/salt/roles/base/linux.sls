@@ -7,3 +7,4 @@ base_packages:
 
 include: 
   - bash
+  - motd

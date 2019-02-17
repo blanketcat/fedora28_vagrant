@@ -46,3 +46,15 @@ bash:
     export PS1='\[\033[01;35m\]\u@\H\[\033[01;34m\] \W \$\[\033[00m\] '
     alias grep='grep --color=auto'
     alias ls='ls --color=auto'
+
+motd:
+  content: |
+           ######################################################
+           #                                                    #
+           #            This host is managed by Salt            #
+           #                                                    #
+           #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
+           #                                                    #
+           #   Changes made directly to this host may be lost   #   
+           #                                                    #
+           ######################################################
