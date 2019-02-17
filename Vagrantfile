@@ -5,7 +5,8 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  os = "bento/fedora-28"
+  fedora = "bento/fedora-28"
+  ubuntu = "ubuntu/xenial64"
   net_ip = "192.168.50"
 
   config.vm.define :master, primary: true do |master_config|
@@ -14,11 +15,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.cpus = 2
         vb.name = "master"
     end
-      master_config.vm.box = "#{os}"
+      master_config.vm.box = "#{fedora}"
       master_config.vm.host_name = 'saltmaster.local'
       master_config.vm.network "private_network", ip: "#{net_ip}.10"
       master_config.vm.synced_folder "saltstack/salt/", "/srv/salt"
       master_config.vm.synced_folder "saltstack/pillar/", "/srv/pillar"
+      master_config.vm.synced_folder "saltstack/formulas/", "/srv/formulas"
 
       master_config.vm.provision :salt do |salt|
         salt.master_config = "saltstack/etc/master"
@@ -27,8 +29,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         salt.minion_key = "saltstack/keys/master_minion.pem"
         salt.minion_pub = "saltstack/keys/master_minion.pub"
         salt.seed_master = {
-                            "minion1" => "saltstack/keys/minion1.pub",
-                            "minion2" => "saltstack/keys/minion2.pub"
+                            "web1" => "saltstack/keys/web1.pub",
+                            "web2" => "saltstack/keys/web2.pub",
+                            "ha-proxy1" => "saltstack/keys/ha-proxy1.pub",
+                            "ha-proxy2" => "saltstack/keys/ha-proxy2.pub",
+                            "ubuntu" => "saltstack/keys/ubuntu.pub"
                            }
 
         salt.install_type = "stable"
@@ -37,14 +42,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         salt.verbose = true
         salt.colorize = true
         salt.bootstrap_options = "-P -c /tmp"
+      master_config.vm.provision "shell", inline: <<-SHELL
+        sudo dnf install nss-mdns avahi -y
+        SHELL
       end
     end
 
     [
-      ["ha-proxy1",    "#{net_ip}.11",    "1024",    os ],
-      ["ha-proxy2",    "#{net_ip}.12",    "1024",    os ],
-      ["web1",    "#{net_ip}.13",    "1024",    os ],
-      ["web2",    "#{net_ip}.14",    "1024",    os ],
+      ["ha-proxy1",    "#{net_ip}.11",    "1024",    fedora ],
+      ["ha-proxy2",    "#{net_ip}.12",    "1024",    fedora ],
+      ["web1",    "#{net_ip}.13",    "1024",    fedora ],
+      ["web2",    "#{net_ip}.14",    "1024",    fedora ],
     ].each do |vmname,ip,mem,os|
       config.vm.define "#{vmname}" do |minion_config|
         minion_config.vm.provider "virtualbox" do |vb|
@@ -64,11 +72,31 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           salt.verbose = true
           salt.colorize = true
           salt.bootstrap_options = "-P -c /tmp"
+        minion_config.vm.provision "shell", inline: <<-SHELL
+          sudo dnf install nss-mdns avahi -y
+          SHELL
         end
       end
     end
-    # Install avahi on all machines
-config.vm.provision "shell", inline: <<-SHELL
-  sudo dnf install nss-mdns avahi -y
-SHELL
+
+  config.vm.define :ubuntu, primary: true do |ubuntu_config|
+    ubuntu_config.vm.provider "virtualbox" do |vb|
+        vb.memory = "1024"
+        vb.cpus = 1
+        vb.name = "ubuntu"
+    end
+      ubuntu_config.vm.box = "#{ubuntu}"
+      ubuntu_config.vm.host_name = 'ubuntu.local'
+      ubuntu_config.vm.network "private_network", ip: "#{net_ip}.15"
+  
+      ubuntu_config.vm.provision :salt do |salt|
+        salt.minion_config = "saltstack/etc/ubuntu"
+        salt.minion_key = "saltstack/keys/ubuntu.pem"
+        salt.minion_pub = "saltstack/keys/ubuntu.pub"
+        salt.install_type = "stable"
+        salt.verbose = true
+        salt.colorize = true
+#        salt.bootstrap_options = "-P -c /tmp"
+      end
+    end
   end
