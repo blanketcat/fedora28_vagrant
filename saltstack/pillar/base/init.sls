@@ -14,14 +14,16 @@ base_packages:
   - traceroute
   - sysstat
   - policycoreutils
+  - python3-dateutil
   - telnet
   - nano
-  - python2-dateutil
-  - python3-dateutil
   - rsync
   - lftp
   - curl
   - nmap
+  {% if salt['grains.get']('os') == 'Ubuntu' %}
+  - python-dateutil
+  {% endif %}
   {% if salt['grains.get']('os_family') == 'RedHat' %}
   - bind-utils
   - mailx
@@ -29,6 +31,7 @@ base_packages:
   - nrpe
   - python2-policycoreutils
   - python3-policycoreutils
+  - python2-dateutil
   - setools-console
   - setroubleshoot-server
   - vim-enhanced
