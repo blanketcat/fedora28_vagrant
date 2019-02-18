@@ -1,6 +1,8 @@
 base:
   '*':
     - roles.base
+  'web*':
+    - roles.webserver
     
 #    - common
 #    - nettools

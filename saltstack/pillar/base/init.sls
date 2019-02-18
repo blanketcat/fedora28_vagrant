@@ -18,6 +18,10 @@ base_packages:
   - nano
   - python2-dateutil
   - python3-dateutil
+  - rsync
+  - lftp
+  - curl
+  - nmap
   {% if salt['grains.get']('os_family') == 'RedHat' %}
   - bind-utils
   - mailx
