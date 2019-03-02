@@ -65,3 +65,13 @@ motd:
            #   Changes made directly to this host may be lost   #   
            #                                                    #
            ######################################################
+
+hello_you:
+  content: |
+    {% if salt ['grains.get']('os_family') == 'RedHat' %}
+      Hello Mr Red Hat
+    {% elif salt ['grains.get']('os_family') == 'Debian' %}
+      Hello Mrs Debs
+    {% else %}
+      I don't know who you are! 
+    {% endif %}      

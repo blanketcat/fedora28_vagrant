@@ -8,6 +8,7 @@ base_packages:
 include: 
   - bash
   - motd
+  - hello_you
 
 {% if salt ['grains.get']('os') == 'Fedora' %}
 {% set dist = salt['cmd.shell']('echo $(rpm -E %fedora)') %}
@@ -21,3 +22,5 @@ rpmfusion-nonfree-release:
     - sources:
       - rpmfusion-nonfree-release: https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{dist}}.noarch.rpm
 {% endif %}
+
+
